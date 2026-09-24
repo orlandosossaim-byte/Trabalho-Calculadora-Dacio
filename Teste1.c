@@ -1,119 +1,737 @@
 /*
-    Teclas do jogo:
-      1 ou 3 -> escolha do personagem
-      2 / 6  -> mover na trilha (esquerda / direita)
-      8      -> binoculo (revela onde esta o tesouro)
-      X      -> tesouro
-      5      -> cobra (inimigo final)
-      7/9/4  -> foice / machado / bumerangue (armas)
-      =      -> soma da pontuacao final
+    ============================================================
+                    JOGO DA CALCULADORA
+    ============================================================
+
+    TECLAS DO JOGO:
+
+    1 ou 3 -> Escolher personagem
+    2      -> Andar para a esquerda
+    6      -> Andar para a direita
+    8      -> Binóculo
+    X      -> Tesouro
+    5      -> Cobra
+    7      -> Foice
+    9      -> Machado
+    4      -> Bumerangue
+    =      -> Pontuação final
+
+    OBJETIVO:
+
+    1. Escolher um personagem.
+    2. Começar em uma posição aleatória.
+    3. Encontrar o binóculo.
+    4. O binóculo revela o tesouro.
+    5. Encontrar o tesouro.
+    6. Enfrentar a cobra.
+    7. Escolher uma arma.
+    8. Somar os pontos.
+    9. Mostrar a pontuação final.
 */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 
-int main() {
-    char trilha[6] = {'.', '.', '.', '.', '.', '.'};
-    int posJogador = 0, posBinoculo, posTesouro, achouBinoculo = 0, achouTesouro = 0, personagem, movimento, arma, dano, pontuacao = 0, i;
-    srand(time(NULL)); /* "embaralha" os numeros aleatorios a cada partida */
 
-    printf("=== JOGO DA CALCULADORA ===\n\n");
+/*
+    ============================================================
+                        CONSTANTES
+    ============================================================
+*/
 
-    /* ---------------------------------------------------
-       PASSO 1: o jogador escolhe o personagem
-       --------------------------------------------------- */
-    printf("Escolha seu personagem:\n");
+/* Quantidade de posições da trilha */
+#define TAMANHO_TRILHA 6
+
+/* Teclas de movimentação */
+#define ESQUERDA 2
+#define DIREITA 6
+
+/* Teclas das armas */
+#define FOICE 7
+#define MACHADO 9
+#define BUMERANGUE 4
+
+
+/*
+    ============================================================
+                    FUNÇÃO MOSTRAR TRILHA
+    ============================================================
+
+    Mostra a trilha na tela.
+
+    O jogador é representado pelo número do personagem.
+
+    Exemplo:
+
+    [ . X . 1 . . ]
+
+    Nesse exemplo, o personagem 1 está na posição 3.
+*/
+void mostrarTrilha(char trilha[], int posJogador, int personagem)
+{
+    int i;
+
+    printf("\nTrilha: [ ");
+
+    /*
+        Percorre todas as posições da trilha.
+    */
+    for (i = 0; i < TAMANHO_TRILHA; i++)
+    {
+        /*
+            Se a posição atual for a posição do jogador,
+            mostramos o personagem.
+        */
+        if (i == posJogador)
+        {
+            printf("%d ", personagem);
+        }
+        else
+        {
+            /*
+                Caso contrário, mostramos o que existe
+                naquela posição.
+            */
+            printf("%c ", trilha[i]);
+        }
+    }
+
+    printf("]\n");
+}
+
+
+/*
+    ============================================================
+                    FUNÇÃO ESCOLHER PERSONAGEM
+    ============================================================
+
+    O jogador pode escolher:
+
+    1 -> Personagem 1
+    3 -> Personagem 3
+*/
+int escolherPersonagem()
+{
+    int personagem;
+
+    printf("\nEscolha seu personagem:\n");
     printf("[1] Personagem 1\n");
     printf("[3] Personagem 3\n");
-    printf("> ");
-    scanf("%d", &personagem);
 
-    /* ---------------------------------------------------
-       PASSO 2: sorteia onde ficam o binoculo e o tesouro
-       --------------------------------------------------- */
-    posBinoculo = rand() % 6;    
-    posTesouro = rand() % 6;
-    while (posTesouro == posBinoculo) {
-        posTesouro = rand() % 6;
+    do
+    {
+        printf("> ");
+        scanf("%d", &personagem);
+
+        /*
+            Verifica se a opção é válida.
+        */
+        if (personagem != 1 && personagem != 3)
+        {
+            printf("Opcao invalida! Escolha 1 ou 3.\n");
+        }
+
+    } while (personagem != 1 && personagem != 3);
+
+    return personagem;
+}
+
+
+/*
+    ============================================================
+                    FUNÇÃO SORTEAR POSIÇÕES
+    ============================================================
+
+    Esta função sorteia três posições:
+
+    - Jogador
+    - Binóculo
+    - Tesouro
+
+    IMPORTANTE:
+
+    As três posições precisam ser diferentes.
+
+    Exemplo válido:
+
+    [ J . 8 . X . ]
+
+    Exemplo inválido:
+
+    [ J . 8 X . . ] -> válido
+
+    [ J . 8 . 8 . ] -> inválido
+*/
+void sortearPosicoes(
+    int *posJogador,
+    int *posBinoculo,
+    int *posTesouro
+)
+{
+    /*
+        ========================================================
+                    SORTEAR JOGADOR
+        ========================================================
+
+        rand() % 6 gera um número entre:
+
+        0, 1, 2, 3, 4 e 5.
+    */
+    *posJogador = rand() % TAMANHO_TRILHA;
+
+
+    /*
+        ========================================================
+                    SORTEAR BINÓCULO
+        ========================================================
+
+        Sorteamos o binóculo.
+    */
+    *posBinoculo = rand() % TAMANHO_TRILHA;
+
+
+    /*
+        O binóculo não pode ficar no mesmo lugar
+        que o jogador.
+    */
+    while (*posBinoculo == *posJogador)
+    {
+        *posBinoculo = rand() % TAMANHO_TRILHA;
     }
+
+
+    /*
+        ========================================================
+                    SORTEAR TESOURO
+        ========================================================
+
+        Sorteamos o tesouro.
+    */
+    *posTesouro = rand() % TAMANHO_TRILHA;
+
+
+    /*
+        O tesouro não pode ficar:
+
+        1. Na posição do jogador.
+        2. Na posição do binóculo.
+    */
+    while (*posTesouro == *posJogador ||
+           *posTesouro == *posBinoculo)
+    {
+        *posTesouro = rand() % TAMANHO_TRILHA;
+    }
+}
+
+
+/*
+    ============================================================
+                    FUNÇÃO JOGAR NA TRILHA
+    ============================================================
+*/
+int jogarNaTrilha(
+    char trilha[],
+    int *posJogador,
+    int posBinoculo,
+    int posTesouro,
+    int personagem,
+    int *pontuacao
+)
+{
+    int movimento;
+
+    /*
+        Indica se o jogador já encontrou o binóculo.
+
+        0 = não encontrou
+        1 = encontrou
+    */
+    int achouBinoculo = 0;
+
+
+    /*
+        Indica se o jogador já encontrou o tesouro.
+
+        0 = não encontrou
+        1 = encontrou
+    */
+    int achouTesouro = 0;
+
+
+    /*
+        Coloca o binóculo na trilha.
+    */
     trilha[posBinoculo] = '8';
 
-    printf("\nUse 2 para ir para esquerda e 6 para ir para direita.\n");
-    printf("Ache o binoculo (8) para descobrir onde esta o tesouro (X)!\n");
 
-    /* ---------------------------------------------------
-       PASSO 3: o jogador anda pela trilha ate achar o tesouro
-       --------------------------------------------------- */
-    while (achouTesouro == 0) {
+    printf("\n====================================\n");
+    printf("          AVENTURA INICIADA!\n");
+    printf("====================================\n");
 
-        /* desenha a trilha na tela */
-        printf("\n[ ");
-        for (i = 0; i < 6; i++) {
-            if (i == posJogador) {
-                printf("%d ", personagem); /* mostra o jogador */
-            } else {
-                printf("%c ", trilha[i]);  /* mostra o que tem na trilha */
-            }
-        }
-        printf("]\n");
+    printf("\nUse %d para andar para a esquerda.\n",
+           ESQUERDA);
 
-        printf("Posicao: %d | Escolha 2 ou 6: ", posJogador);
+    printf("Use %d para andar para a direita.\n",
+           DIREITA);
+
+    printf("\nEncontre o binoculo (8) para revelar");
+    printf(" o tesouro!\n");
+
+
+    /*
+        Continua enquanto o tesouro não for encontrado.
+    */
+    while (!achouTesouro)
+    {
+        /*
+            Mostra a trilha.
+        */
+        mostrarTrilha(
+            trilha,
+            *posJogador,
+            personagem
+        );
+
+
+        /*
+            Mostra a posição atual.
+        */
+        printf("Posicao atual: %d\n", *posJogador);
+
+        printf("Escolha %d ou %d: ",
+               ESQUERDA,
+               DIREITA);
+
         scanf("%d", &movimento);
 
-        if (movimento == 2 && posJogador > 0) {
-            posJogador = posJogador - 1; /* anda para esquerda */
-        }
-        if (movimento == 6 && posJogador < 5) {
-            posJogador = posJogador + 1; /* anda para direita */
+
+        /*
+            ====================================================
+                    ANDAR PARA A ESQUERDA
+            ====================================================
+        */
+        if (movimento == ESQUERDA)
+        {
+            /*
+                Verifica se não estamos na primeira
+                posição.
+            */
+            if (*posJogador > 0)
+            {
+                (*posJogador)--;
+
+                printf("Voce andou para a esquerda.\n");
+            }
+            else
+            {
+                printf("Voce ja esta no inicio da trilha!\n");
+            }
         }
 
-        /* chegou no binoculo? */
-        if (achouBinoculo == 0 && posJogador == posBinoculo) {
+
+        /*
+            ====================================================
+                    ANDAR PARA A DIREITA
+            ====================================================
+        */
+        else if (movimento == DIREITA)
+        {
+            /*
+                Verifica se não estamos na última
+                posição.
+            */
+            if (*posJogador < TAMANHO_TRILHA - 1)
+            {
+                (*posJogador)++;
+
+                printf("Voce andou para a direita.\n");
+            }
+            else
+            {
+                printf("Voce ja esta no final da trilha!\n");
+            }
+        }
+
+
+        /*
+            ====================================================
+                    MOVIMENTO INVÁLIDO
+            ====================================================
+        */
+        else
+        {
+            printf("\nMovimento invalido!\n");
+            printf("Use somente %d ou %d.\n",
+                   ESQUERDA,
+                   DIREITA);
+
+            continue;
+        }
+
+
+        /*
+            ====================================================
+                    VERIFICAR BINÓCULO
+            ====================================================
+        */
+
+        if (!achouBinoculo &&
+            *posJogador == posBinoculo)
+        {
+            /*
+                O jogador encontrou o binóculo.
+            */
             achouBinoculo = 1;
+
+
+            /*
+                Remove o binóculo da trilha.
+            */
             trilha[posBinoculo] = '.';
-            trilha[posTesouro] = 'X'; /* revela o tesouro na trilha */
-            printf("\n>> Binoculo encontrado! O tesouro apareceu na trilha.\n");
+
+
+            /*
+                Revela o tesouro.
+            */
+            trilha[posTesouro] = 'X';
+
+
+            printf("\n====================================\n");
+            printf("        BINOCULO ENCONTRADO!\n");
+            printf("====================================\n");
+
+            printf("O tesouro foi revelado!\n");
         }
 
-        /* chegou no tesouro? (so conta depois de achar o binoculo) */
-        if (achouBinoculo == 1 && posJogador == posTesouro) {
+
+        /*
+            ====================================================
+                    VERIFICAR TESOURO
+            ====================================================
+        */
+
+        if (achouBinoculo &&
+            *posJogador == posTesouro)
+        {
+            /*
+                O tesouro foi encontrado.
+            */
             achouTesouro = 1;
-            pontuacao = pontuacao + 50;
-            printf("\n>> Voce encontrou o tesouro! +50 pontos.\n");
+
+
+            /*
+                Adiciona 50 pontos.
+            */
+            *pontuacao += 50;
+
+
+            printf("\n====================================\n");
+            printf("          TESOURO ENCONTRADO!\n");
+            printf("====================================\n");
+
+            printf("+50 pontos!\n");
+
+            printf("Pontuacao atual: %d\n",
+                   *pontuacao);
         }
     }
 
-    /* ---------------------------------------------------
-       PASSO 4: batalha contra a cobra
-       --------------------------------------------------- */
-    printf("\nUma cobra gigante (5) apareceu para proteger o tesouro!\n");
-    printf("Escolha sua arma:\n");
-    printf("[7] Foice\n[9] Machado\n[4] Bumerangue\n> ");
-    scanf("%d", &arma);
 
-    if (arma == 9) {
-        dano = 30; /* machado: dano alto */
-    } else if (arma == 7) {
-        dano = 20; /* foice: dano medio */
-    } else {
-        dano = 15; /* bumerangue: dano baixo */
+    return achouTesouro;
+}
+
+
+/*
+    ============================================================
+                    FUNÇÃO ESCOLHER ARMA
+    ============================================================
+*/
+int escolherArma()
+{
+    int arma;
+
+    printf("\n====================================\n");
+    printf("            ESCOLHA SUA ARMA\n");
+    printf("====================================\n");
+
+    printf("[7] Foice\n");
+    printf("[9] Machado\n");
+    printf("[4] Bumerangue\n");
+
+    do
+    {
+        printf("> ");
+        scanf("%d", &arma);
+
+        if (arma != FOICE && arma != MACHADO && arma != BUMERANGUE)
+        {
+            printf("Arma invalida!\n");
+            printf("Escolha 7, 9 ou 4.\n");
+        }
+
+    } while (arma != FOICE && arma != MACHADO && arma != BUMERANGUE);
+
+    return arma;
+}
+
+
+/*
+    ============================================================
+                    FUNÇÃO CALCULAR DANO
+    ============================================================
+
+    Foice      -> 20 de dano
+    Machado    -> 30 de dano
+    Bumerangue -> 15 de dano
+*/
+int calcularDano(int arma)
+{
+    if (arma == MACHADO)
+    {
+        return 30;
+    }
+    else if (arma == FOICE)
+    {
+        return 20;
+    }
+    else
+    {
+        return 15;
+    }
+}
+
+
+/*
+    ============================================================
+                    FUNÇÃO BATALHA
+    ============================================================
+*/
+void batalha(int *pontuacao)
+{
+    int arma, dano;
+
+
+    /*
+        Apresenta o inimigo.
+    */
+    printf("\n====================================\n");
+    printf("       UMA COBRA GIGANTE APARECEU!\n");
+    printf("                    5\n");
+    printf("====================================\n");
+
+
+    /*
+        Jogador escolhe uma arma.
+    */
+    arma = escolherArma();
+
+
+    /*
+        Calcula o dano.
+    */
+    dano = calcularDano(arma);
+
+
+    /*
+        Mostra o ataque.
+    */
+    printf("\nVoce atacou a cobra!\n");
+    printf("Dano causado: %d\n", dano);
+
+
+    /*
+        Soma o dano à pontuação.
+    */
+    *pontuacao += dano;
+
+
+    /*
+        Verifica se a cobra foi derrotada.
+    */
+    if (dano >= 20)
+    {
+        printf("\nA cobra foi derrotada!\n");
+        printf("Voce venceu o jogo!\n");
+    }
+    else
+    {
+        printf("\nA cobra ficou ferida.\n");
+        printf("Voce escapou com o tesouro!\n");
     }
 
-    printf("\nVoce ataca a cobra e causa %d de dano!\n", dano);
-    pontuacao = pontuacao + dano;
 
-    if (dano >= 20) {
-        printf("A cobra foi derrotada! Voce venceu o jogo!\n");
-    } else {
-        printf("A cobra ficou ferida, mas voce escapou com o tesouro!\n");
-    }
+    /*
+        Mostra a pontuação depois da batalha.
+    */
+    printf("\nPontuacao apos a batalha: %d\n",
+           *pontuacao);
+}
 
-    /* ---------------------------------------------------
-       PASSO 5: mostra a pontuacao final
-       --------------------------------------------------- */
-    printf("\n===========================\n");
-    printf("(=) PONTUACAO FINAL: %d\n", pontuacao);
-    printf("===========================\n");
 
+/*
+    ============================================================
+                        FUNÇÃO MAIN
+    ============================================================
+
+    É aqui que o programa começa.
+*/
+int main()
+{
+    /*
+        ========================================================
+                    CRIAR A TRILHA
+        ========================================================
+
+        A trilha possui 6 posições.
+
+        Inicialmente:
+
+        [ . . . . . . ]
+    */
+    char trilha[TAMANHO_TRILHA] = {'.', '.', '.', '.', '.', '.'};
+
+
+    /*
+        ========================================================
+                    VARIÁVEIS
+        ========================================================
+    */
+
+    /*
+        Agora o jogador também terá uma posição
+        sorteada aleatoriamente.
+    */
+    int posJogador;
+
+
+    /*
+        Posição do binóculo.
+    */
+    int posBinoculo;
+
+
+    /*
+        Posição do tesouro.
+    */
+    int posTesouro;
+
+
+    /*
+        Personagem escolhido.
+    */
+    int personagem;
+
+
+    /*
+        Pontuação começa em zero.
+    */
+    int pontuacao = 0;
+
+
+    /*
+        ========================================================
+                INICIAR NÚMEROS ALEATÓRIOS
+        ========================================================
+
+        time(NULL) pega o horário atual.
+
+        srand() usa esse horário para criar uma
+        sequência diferente de números aleatórios
+        a cada partida.
+    */
+    srand(time(NULL));
+
+
+    /*
+        ========================================================
+                        TÍTULO
+        ========================================================
+    */
+
+    printf("====================================\n");
+    printf("       JOGO DA CALCULADORA\n");
+    printf("====================================\n");
+
+
+    /*
+        ========================================================
+                    ESCOLHER PERSONAGEM
+        ========================================================
+    */
+
+    personagem = escolherPersonagem();
+
+
+    /*
+        ========================================================
+                SORTEAR AS TRÊS POSIÇÕES
+        ========================================================
+
+        Agora:
+
+        - jogador tem uma posição aleatória;
+        - binóculo tem uma posição aleatória;
+        - tesouro tem uma posição aleatória.
+
+        E nenhuma das três posições será igual.
+    */
+    sortearPosicoes(&posJogador, &posBinoculo, &posTesouro);
+
+
+    /*
+        Mostra que o personagem começou em uma posição aleatória. Isso ajuda o jogador a entender o jogo.
+    */
+    printf("\n====================================\n");
+    printf("          AVENTURA INICIADA!\n");
+    printf("====================================\n");
+
+    printf("Seu personagem comecou na ");
+    printf("posicao %d.\n", posJogador);
+
+    printf("O binoculo esta escondido na trilha.\n");
+    printf("Encontre-o para revelar o tesouro!\n");
+
+
+    /*
+        ========================================================
+                    JOGAR NA TRILHA
+        ========================================================
+    */
+
+    jogarNaTrilha(trilha,&posJogador,posBinoculo,posTesouro,personagem,&pontuacao);
+
+
+    /*
+        ========================================================
+                    BATALHA CONTRA A COBRA
+        ========================================================
+    */
+
+    batalha(&pontuacao);
+
+
+    /*
+        ========================================================
+                    PONTUAÇÃO FINAL
+        ========================================================
+    */
+
+    printf("\n");
+    printf("====================================\n");
+    printf("          (=) RESULTADO FINAL\n");
+    printf("====================================\n");
+
+    printf("Pontuacao final: %d pontos\n",
+           pontuacao);
+
+    printf("====================================\n");
+    printf("             FIM DO JOGO!\n");
+    printf("====================================\n");
+
+
+    /*
+        O programa terminou corretamente.
+    */
     return 0;
 }
