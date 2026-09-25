@@ -40,10 +40,10 @@
     ============================================================
 */
 
-/* Quantidade de posições da trilha */
+/* Quantidade de casa disponiveis na trilha */
 #define TAMANHO_TRILHA 6
 
-/* Teclas de movimentação */
+/* Teclas para se mover */
 #define ESQUERDA 2
 #define DIREITA 6
 
@@ -599,8 +599,7 @@ int main()
     */
 
     /*
-        Agora o jogador também terá uma posição
-        sorteada aleatoriamente.
+        posicao inicial do jogador, sorteado aleatoriamente.
     */
     int posJogador;
 
@@ -624,7 +623,7 @@ int main()
 
 
     /*
-        Pontuação começa em zero.
+        Pontuação do jogador comeca em 0.
     */
     int pontuacao = 0;
 
