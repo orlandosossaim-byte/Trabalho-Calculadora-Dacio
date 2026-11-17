@@ -13,18 +13,24 @@
 #define MACHADO 9
 #define BUMERANGUE 4
 
+//Coloque 0 aqui se o seu terminal nao mostrar as cores direito
+#ifndef USAR_COR
 #define USAR_COR 1
-#define LARGURA_CASA 11
-#define LARGURA_CENA (TAMANHO_TRILHA * LARGURA_CASA)
-#define ALTURA_CENA 16
-#define ALTURA_SPRITE 4
-#define LINHA_SPRITES 10
-#define LINHA_CAMINHO 14
-#define LINHA_NUMEROS 15
+#endif
+
+#define LARGURA_CASA   11
+#define LARGURA_CENA   (TAMANHO_TRILHA * LARGURA_CASA)
+#define ALTURA_CENA    16
+#define ALTURA_SPRITE  4
+#define LINHA_SPRITES  10   //onde os personagens/itens comecam
+#define LINHA_CAMINHO  14   //linha da trilha ("=====")
+#define LINHA_NUMEROS  15   //numeracao das casas
 
 static char cena[ALTURA_CENA][LARGURA_CENA];
 static char cor[ALTURA_CENA][LARGURA_CENA];
 
+
+//Desenhos
 static const char *SOL[3] = {
     "  \\ | /  ",
     " -- O -- ",
@@ -87,20 +93,23 @@ static const char *TESOURO[ALTURA_SPRITE] = {
     "'-----'"
 };
 
+
+//Parte do cenario: configuracao e troca das cores exibidas no terminal
+//Cores
 static const char *codigoCor(char c)
 {
     switch (c)
     {
-        case 'y': return "\033[93m";
-        case 'o': return "\033[33m";
-        case 'g': return "\033[32m";
-        case 'G': return "\033[92m";
-        case 'c': return "\033[96m";
-        case 'w': return "\033[97m";
-        case 'k': return "\033[90m";
-        case 'r': return "\033[91m";
-        case 'm': return "\033[95m";
-        default: return "\033[0m";
+        case 'y': return "\033[93m";   // amarelo
+        case 'o': return "\033[33m";   // marrom
+        case 'g': return "\033[32m";   // verde
+        case 'G': return "\033[92m";   // verde claro
+        case 'c': return "\033[96m";   // ciano
+        case 'w': return "\033[97m";   // branco
+        case 'k': return "\033[90m";   // cinza
+        case 'r': return "\033[91m";   // vermelho
+        case 'm': return "\033[95m";   // magenta
+        default:  return "\033[0m";    // normal
     }
 }
 
@@ -125,10 +134,15 @@ static void habilitarCores(void)
     DWORD modo = 0;
 
     if (h != INVALID_HANDLE_VALUE && GetConsoleMode(h, &modo))
-        SetConsoleMode(h, modo | 0x0004);
+        SetConsoleMode(h, modo | 0x0004);   //ENABLE_VIRTUAL_TERMINAL_PROCESSING
 #endif
 }
 
+
+//Parte do cenario: funcoes auxiliares usadas para desenhar e imprimir.
+//Funcoes de desenho
+
+//Escreve um texto na cena (espacos sao transparentes)
 static void carimbar(int y, int x, const char *txt, char c)
 {
     int i;
@@ -140,14 +154,15 @@ static void carimbar(int y, int x, const char *txt, char c)
     {
         int xx = x + i;
 
-        if (xx >= 0 && xx < LARGURA_CENA && txt[i] != ' ')
-        {
-            cena[y][xx] = txt[i];
-            cor[y][xx] = c;
-        }
+        if (xx < 0 || xx >= LARGURA_CENA || txt[i] == ' ')
+            continue;
+
+        cena[y][xx] = txt[i];
+        cor[y][xx] = c;
     }
 }
 
+//Desenha varias linhas; "cores" tem uma letra de cor por linha
 static void desenhar(int y, int x, const char *linhas[], int n, const char *cores)
 {
     int i;
@@ -156,49 +171,56 @@ static void desenhar(int y, int x, const char *linhas[], int n, const char *core
         carimbar(y + i, x, linhas[i], cores[i]);
 }
 
+//Monta o cenario completo na memoria
 static void montarCena(char trilha[], int posJogador, int personagem)
 {
     int i, x, y;
     char numero[16];
 
+    //Limpa
     for (y = 0; y < ALTURA_CENA; y++)
-    {
         for (x = 0; x < LARGURA_CENA; x++)
         {
             cena[y][x] = ' ';
             cor[y][x] = ' ';
         }
-    }
 
+    //Ceu
     desenhar(0, 57, SOL, 3, "yyy");
     desenhar(0, 14, NUVEM, 3, "www");
     desenhar(0, 35, NUVEM, 3, "www");
 
-    desenhar(1, 3, MONTANHA, 4, "wkkk");
+    //Montanhas
+    desenhar(1, 3,  MONTANHA, 4, "wkkk");
     desenhar(1, 24, MONTANHA, 4, "wkkk");
     desenhar(1, 46, MONTANHA, 4, "wkkk");
 
-    desenhar(5, 0, ARVORE_GRANDE, 5, "GGggo");
+    //Floresta
+    desenhar(5, 0,  ARVORE_GRANDE,  5, "GGggo");
     desenhar(6, 11, ARVORE_PEQUENA, 4, "Gggo");
-    desenhar(5, 20, ARVORE_GRANDE, 5, "GGggo");
+    desenhar(5, 20, ARVORE_GRANDE,  5, "GGggo");
     desenhar(6, 31, ARVORE_PEQUENA, 4, "Gggo");
-    desenhar(5, 41, ARVORE_GRANDE, 5, "GGggo");
+    desenhar(5, 41, ARVORE_GRANDE,  5, "GGggo");
     desenhar(6, 52, ARVORE_PEQUENA, 4, "Gggo");
-    desenhar(5, 58, ARVORE_GRANDE, 5, "GGggo");
+    desenhar(5, 58, ARVORE_GRANDE,  5, "GGggo");
 
+    //Caminho de terra
     for (x = 0; x < LARGURA_CENA; x++)
     {
         cena[LINHA_CAMINHO][x] = '=';
         cor[LINHA_CAMINHO][x] = 'o';
     }
 
+    //Casas da trilha
     for (i = 0; i < TAMANHO_TRILHA; i++)
     {
         int base = i * LARGURA_CASA;
 
-        carimbar(LINHA_CAMINHO - 1, base, ",\"", 'g');
+        //tufos de grama nas laterais
+        carimbar(LINHA_CAMINHO - 1, base,     ",\"", 'g');
         carimbar(LINHA_CAMINHO - 1, base + 9, "\",", 'g');
 
+        //quem esta nessa casa?
         if (i == posJogador)
         {
             if (personagem == 1)
@@ -211,15 +233,21 @@ static void montarCena(char trilha[], int posJogador, int personagem)
         else if (trilha[i] == 'X')
             desenhar(LINHA_SPRITES, base + 2, TESOURO, ALTURA_SPRITE, "yoyo");
 
+        //numeracao (a casa do jogador fica destacada)
         if (i == posJogador)
+        {
             snprintf(numero, sizeof(numero), " >>[ %d ]<< ", i);
+            carimbar(LINHA_NUMEROS, base, numero, 'y');
+        }
         else
+        {
             snprintf(numero, sizeof(numero), "   [ %d ]   ", i);
-
-        carimbar(LINHA_NUMEROS, base, numero, i == posJogador ? 'y' : 'k');
+            carimbar(LINHA_NUMEROS, base, numero, 'k');
+        }
     }
 }
 
+//Imprime o cenario com moldura
 static void imprimirCena(void)
 {
     int x, y, i;
@@ -227,22 +255,17 @@ static void imprimirCena(void)
 
     printf("\n");
 
+    //Moldura superior com titulo
     trocarCor(&atual, 'k');
     printf("+");
-
-    for (i = 0; i < 23; i++)
-        putchar('=');
-
+    for (i = 0; i < 23; i++) putchar('=');
     trocarCor(&atual, 'y');
     printf(" TRILHA DA AVENTURA ");
-
     trocarCor(&atual, 'k');
-
-    for (i = 0; i < 23; i++)
-        putchar('=');
-
+    for (i = 0; i < 23; i++) putchar('=');
     printf("+\n");
 
+    //Cenario
     for (y = 0; y < ALTURA_CENA; y++)
     {
         trocarCor(&atual, 'k');
@@ -258,26 +281,29 @@ static void imprimirCena(void)
         printf("|\n");
     }
 
+    //Moldura inferior
     trocarCor(&atual, 'k');
     printf("+");
-
-    for (i = 0; i < LARGURA_CENA; i++)
-        putchar('=');
-
+    for (i = 0; i < LARGURA_CENA; i++) putchar('=');
     printf("+\n");
 
+    //Legenda
     trocarCor(&atual, 'w');
     printf("  (O)=(O) binoculo     |=[X]=| tesouro     >>[ n ]<< voce esta aqui\n");
 
     trocarCor(&atual, ' ');
 }
 
+
+//Parte do cenario (PARTE 2): chama a montagem e a impressao da trilha.
+//MOSTRAR A TRILHA
 void mostrarTrilha(char trilha[], int posJogador, int personagem)
 {
     montarCena(trilha, posJogador, personagem);
     imprimirCena();
 }
 
+//ESCOLHER PERSONAGEM
 int escolherPersonagem()
 {
     int personagem, l;
@@ -288,9 +314,11 @@ int escolherPersonagem()
     for (l = 0; l < ALTURA_SPRITE; l++)
         printf("      %s             %s\n", PERSONAGEM_1[l], PERSONAGEM_3[l]);
 
+    printf("\n");
+
     do
     {
-        printf("\n> ");
+        printf("> ");
         scanf("%d", &personagem);
 
         if (personagem != 1 && personagem != 3)
@@ -301,6 +329,10 @@ int escolherPersonagem()
     return personagem;
 }
 
+
+// Escolha da arma: esta funcao e chamada na batalha final.
+// Ela apresenta as opcoes e valida a escolha do jogador.
+// ESCOLHER ARMA
 int escolherArma()
 {
     int arma;
@@ -326,6 +358,7 @@ int escolherArma()
     return arma;
 }
 
+//JOGAR NA TRILHA
 int jogarNaTrilha(char trilha[], int posJogador, int posBinoculo,
                   int posTesouro, int personagem, int pontuacao)
 {
@@ -342,6 +375,7 @@ int jogarNaTrilha(char trilha[], int posJogador, int posBinoculo,
     printf("Use %d para esquerda e %d para direita.\n", ESQUERDA, DIREITA);
     printf("Encontre o binoculo para revelar o tesouro!\n");
 
+    //while repete a aventura ate o jogador encontrar o tesouro.
     while (achouTesouro == 0)
     {
         mostrarTrilha(trilha, posJogador, personagem);
@@ -373,6 +407,7 @@ int jogarNaTrilha(char trilha[], int posJogador, int posBinoculo,
         else
             printf("Movimento invalido! Use 2 ou 6.\n");
 
+
         if (movimento == ESQUERDA || movimento == DIREITA)
         {
             if (achouBinoculo == 0 && posJogador == posBinoculo)
@@ -388,8 +423,10 @@ int jogarNaTrilha(char trilha[], int posJogador, int posBinoculo,
             if (achouBinoculo == 1 && posJogador == posTesouro)
             {
                 achouTesouro = 1;
+                //Encontrar o tesouro acrescenta 50 pontos.
                 pontuacao += 50;
 
+                //Mostra a trilha uma ultima vez com o jogador no tesouro
                 mostrarTrilha(trilha, posJogador, personagem);
 
                 printf("\nTESOURO ENCONTRADO!\n");
@@ -402,6 +439,7 @@ int jogarNaTrilha(char trilha[], int posJogador, int posBinoculo,
     return pontuacao;
 }
 
+//BATALHA CONTRA A COBRA
 int batalha(int pontuacao)
 {
     int arma, dano;
@@ -422,6 +460,7 @@ int batalha(int pontuacao)
     printf("\nVoce atacou a cobra!\n");
     printf("Dano causado: %d\n", dano);
 
+    //O dano da arma tambem e somado a pontuacao.
     pontuacao += dano;
 
     if (dano >= 20)
@@ -440,6 +479,7 @@ int batalha(int pontuacao)
     return pontuacao;
 }
 
+//PROGRAMA PRINCIPAL
 int main()
 {
     char trilha[TAMANHO_TRILHA] = {'.', '.', '.', '.', '.', '.'};
@@ -449,25 +489,34 @@ int main()
     int pontuacao = 0;
 
     habilitarCores();
+
     srand(time(NULL));
 
+    //apresenta o nome e a ideia do jogo.
     printf("====================================\n");
     printf("       JOGO DA CALCULADORA\n");
     printf("====================================\n");
 
+    //chama a funcao de escolha do personagem.
     personagem = escolherPersonagem();
 
+    //Sorteio: define posicoes aleatorias sem repetir jogador,
+    //binoculo e tesouro. srand(time(NULL)) muda a sequencia
+    //de numeros aleatorios a cada execucao.
+
+    //SORTEAR POSICOES
     posJogador = rand() % TAMANHO_TRILHA;
 
-    do
-    {
-        posBinoculo = rand() % TAMANHO_TRILHA;
-    } while (posBinoculo == posJogador);
+    posBinoculo = rand() % TAMANHO_TRILHA;
 
-    do
-    {
+    while (posBinoculo == posJogador)
+        posBinoculo = rand() % TAMANHO_TRILHA;
+
+    posTesouro = rand() % TAMANHO_TRILHA;
+
+    while (posTesouro == posJogador || posTesouro == posBinoculo)
         posTesouro = rand() % TAMANHO_TRILHA;
-    } while (posTesouro == posJogador || posTesouro == posBinoculo);
+
 
     printf("\nSeu personagem comecou na posicao %d.\n", posJogador);
     printf("O binoculo esta escondido na trilha.\n");
@@ -478,6 +527,7 @@ int main()
 
     pontuacao = batalha(pontuacao);
 
+    //RESULTADO FINAL
     printf("\n====================================\n");
     printf("          (=) RESULTADO FINAL\n");
     printf("====================================\n");
