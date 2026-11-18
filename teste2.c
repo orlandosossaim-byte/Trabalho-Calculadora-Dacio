@@ -232,7 +232,7 @@ static void montarCena(char trilha[], int posJogador, int personagem)
         else if (trilha[i] == 'X')
             desenhar(LINHA_SPRITES, base + 2, TESOURO, ALTURA_SPRITE, "yoyo");
 
-        //numeracao (a casa do jogador fica destacada)
+        //numeracao casa jogador
         if (i == posJogador)
         {
             snprintf(numero, sizeof(numero), " >>[ %d ]<< ", i);
